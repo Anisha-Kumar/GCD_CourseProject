@@ -5,15 +5,19 @@
 ## measurement from the previously created dataframe (mean and std), per activity 
 ## and subject.
 
-# Read in the column Names for each of the features
+# Read in the column Names for each of the features and clean them to be usuable in R as
+# column Names
 feature_labels = read.table('data/features.txt', col.names=c("id", "label"))
+feature_labels = gsub("\\(\\)", "", as.character(feature_labels$label))
+feature_labels = gsub("-", "_", feature_labels)
+
 # Read in the activty labels:
-activity_labels = read.table('data/activity_labels.txt', col.names=c("id", "label"))
-activity_labels = as.character(activity_labels$label) 
+activity_labels = read.table('data/activity_labels.txt', col.names=c("id", "label"),)
+activity_labels = as.character(activity_labels$label)
 
 # Read in the feature data
-train_X_data = read.table('data/train/X_train.txt', col.names=feature_labels$label)
-test_X_data = read.table('data/test/X_test.txt', col.names=feature_labels$label)
+train_X_data = read.table('data/train/X_train.txt', col.names=feature_labels)
+test_X_data = read.table('data/test/X_test.txt', col.names=feature_labels)
 
 # Read in the two other parameters, activity, and subject
 # activity:
@@ -28,35 +32,20 @@ X_data = rbind(train_X_data, test_X_data)
 y_data = rbind(train_y_data, test_y_data)
 subject_data = rbind(train_subject, test_subject)
 
-# combine all those individual data rows to one dataset
+# combine all those individual data columns to one dataset
 data = cbind(X_data, y_data, subject_data)
 
 # convert and label the factor variables subject and activity
 data$activity = factor(data$activity, labels = activity_labels)
 data$subject = factor(data$subject)
 
-# select only the mean and std deviation from each measurement
+# select only the means and std deviations from each measurement
+mean_std_labels = feature_labels[(grepl("mean", feature_labels) | grepl("std", feature_labels)) 
+                                 & !grepl("meanFreq", feature_labels)]
+
 data = subset(data, select=c("activity",
                              "subject",
-                             "tBodyAcc.mean...X",
-                             "tBodyAcc.mean...Y",
-                             "tBodyAcc.mean...Z",
-                             "tBodyAcc.std...X",
-                             "tBodyAcc.std...Y",
-                             "tBodyAcc.std...Z",
-                             "tGravityAcc.mean...X",
-                             "tGravityAcc.mean...Y",
-                             "tGravityAcc.mean...Z",
-                             "tGravityAcc.std...X",
-                             "tGravityAcc.std...Y",
-                             "tGravityAcc.std...Z",
-                             "tBodyAccJerk.mean...X",
-                             "tBodyAccJerk.mean...Y",
-                             "tBodyAccJerk.mean...Z",
-                             "tBodyAccJerk.std...X",
-                             "tBodyAccJerk.std...Y",
-                             "tBodyAccJerk.std...Z" ))
-
+                             mean_std_labels))
 
 # now lets create the tidy dataset, which displays the mean of all the measurement per 
 # subject and activity
